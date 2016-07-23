@@ -1,0 +1,64 @@
+* keyswap-mode.el
+Swap bindings between two keys
+** Install
+Download =keyswap-mode.el=, add to emacs load-path with
+: (add-to-list 'load-path "/path/to/directory/containing/this/file/")
+** Usage
+Turn on =keyswap-mode= with
+: (keyswap-mode)
+keyswap-mode is a minor mode that allows swapping the commands of two keys.
+It comes with a default set of keys to swap of the number keys and their
+shifted counterparts along with the '-' and '_' key.
+This is generally useful in programming languages where symbols are more
+often used than numbers.
+
+To use keyswap-mode, make sure this file is in the Emacs load-path:
+:  (add-to-list 'load-path "/path/to/directory/or/file")
+
+Then require keyswap-mode:
+:  (require 'keyswap-mode)
+
+To toggle between swapped and not-swapped sets of keys, use the command
+=(keyswap-mode)= or =M-x keyswap-mode=
+
+Keys are swapped on a major-mode basis.
+If you change the swapped keys in one buffer these changes are propagated to
+all other major modes.
+
+The set of keys to swap is stored in the buffer local =keyswap-pairs=
+variable.
+This variable is an alist of vectors ready for passing to =define-key= that
+should be swapped when =keyswap-mode= is turned on.
+Its default is to swap all number keys and their shifted alternatives, along
+with the - and _ keys.
+
+In order to change the current swapped keys one should modify this list with
+=keyswap-add-pairs= or =keyswap-remove-pairs=, and then run
+=keyswap-update-keys= like so
+: (keyswap-add-pairs ?\: ?\;)
+: (keyswap-remove-pairs ?\- ?\_)
+: (keyswap-update-keys)
+
+Without running =keyswap-update-keys= the changes in =keyswap-pairs= will not
+be propagated into the action of =keyswap-mode=.
+
+There are some provided hooks for common modifications of =keyswap-pairs=
+that modify the pairs to swap and call =keyswap-update-keys= accordingly.
+These are =keyswap-include-braces= to swap [ and ] with { and },
+=keyswap-include-quotes= to swap ' with ", =keyswap-tac-underscore-exception=
+to *not* swap - and _, and finally =keyswap-colon-semicolon= to swap : and ;.
+
+It is recommended to turn on =keyswap-mode= by default in programming buffers
+with
+: (add-hook 'prog-mode-hook 'keyswap-mode)
+
+and then add modifications for each major-mode you desire accordingly, e.g.
+
+#+BEGIN_EXAMPLE
+(with-eval-after-load 'cc-vars
+  (add-hook 'c-mode-common-hook 'keyswap-include-quotes))
+
+(with-eval-after-load 'lisp-mode
+  (add-hook 'emacs-lisp-mode-hook 'keyswap-tac-underscore-exception)
+  (add-hook 'lisp-mode-hook 'keyswap-tac-underscore-exception))
+#+END_EXAMPLE
