@@ -102,10 +102,10 @@
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
 (defun keyswap-equivalent-binding (key)
-  "NOTE -- this function is broken but useful.
+  "NOTE -- this function is hacky but useful.
 
-At the moment I can't find a way to fix it, but I'm using it with
-all its kludges anyway.
+I use the docstring of a function to recognise it, this docstring
+should begin with `keyswap-command-docstring'.
 
 Finds the command that is run when `key' is pressed.
 
