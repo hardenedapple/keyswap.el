@@ -185,16 +185,6 @@ anything other than create and return the keymap."
     (dolist (key-pair keyswap-pairs return-map)
       (keyswap-swap-these (car key-pair) (cdr key-pair) return-map))))
 
-(defun keyswap-update-keys ()
-  "Update the buffer-local keymap currently used for `keyswap-mode'"
-  (interactive)
-  (when (assoc 'keyswap-mode minor-mode-overriding-map-alist)
-    (let ((currently-on keyswap-mode))
-      (when currently-on (keyswap-mode 0))
-      (setf (cdr (assoc 'keyswap-mode minor-mode-overriding-map-alist))
-            (keyswap-swapped-keymap))
-      (when currently-on (keyswap-mode t)))))
-
 ;;;###autoload
 (define-minor-mode keyswap-mode
   "Minor mode for programming where number keys are swapped with their shifted
@@ -234,6 +224,15 @@ First off, if this minor mode is activated before others that change the current
     (push (cons 'keyswap-mode (keyswap-swapped-keymap))
           minor-mode-overriding-map-alist)))
 
+(defun keyswap-update-keys ()
+  "Update the buffer-local keymap currently used for `keyswap-mode'."
+  (interactive)
+  (when (assoc 'keyswap-mode minor-mode-overriding-map-alist)
+    (let ((currently-on keyswap-mode))
+      (when currently-on (keyswap-mode 0))
+      (setf (cdr (assoc 'keyswap-mode minor-mode-overriding-map-alist))
+            (keyswap-swapped-keymap))
+      (when currently-on (keyswap-mode t)))))
 
 (defun keyswap-act-on-pairs (action-fn keyswaps)
   "Call ACTION-FN on successive pairs of KEYSWAPS."
