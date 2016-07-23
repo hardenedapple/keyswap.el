@@ -118,10 +118,11 @@ Then return the result of (command nil t).
 
 Otherwise create a `lambda' function that runs that command under
 the false environment where `last-command-event' is KEY"
-  (let ((current-binding (key-binding key)))
+  (let* ((current-binding (key-binding key))
+         (current-docstring (documentation current-binding)))
     (if (and (listp current-binding)
-             (string-prefix-p keyswap-command-docstring
-                              (documentation current-binding)))
+             current-docstring
+             (string-prefix-p keyswap-command-docstring current-docstring))
         (funcall current-binding nil t)
       ;; `lexical-let' uses `cl--function-convert' which wraps any lambda functions
       ;; in another lambda function, passing in arguments to pretend that we're
