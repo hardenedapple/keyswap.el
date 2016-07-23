@@ -1,5 +1,7 @@
 * keyswap-mode.el
 Swap bindings between two keys
+
+This allows the easy toggling of bindings by turning off and on =keyswap-mode=.
 ** Install
 Download =keyswap-mode.el=, add to emacs load-path with
 : (add-to-list 'load-path "/path/to/directory/containing/this/file/")
@@ -62,3 +64,6 @@ and then add modifications for each major-mode you desire accordingly, e.g.
   (add-hook 'emacs-lisp-mode-hook 'keyswap-tac-underscore-exception)
   (add-hook 'lisp-mode-hook 'keyswap-tac-underscore-exception))
 #+END_EXAMPLE
+
+To toggle between having keys swapped and not, just turn on and off
+=keyswap-mode=.

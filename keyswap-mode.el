@@ -89,6 +89,9 @@
 ;; (with-eval-after-load 'lisp-mode
 ;;   (add-hook 'emacs-lisp-mode-hook 'keyswap-tac-underscore-exception)
 ;;   (add-hook 'lisp-mode-hook 'keyswap-tac-underscore-exception))
+;;
+;; To toggle between having keys swapped and not, just turn on and off
+;; `keyswap-mode'.
 
 
 
