@@ -29,7 +29,7 @@
 ;; Version: 0.1.0
 ;; Package-Version: 20160722.2100
 ;; URL: http://github.com/hardenedapple/keyswap-mode
-;; Package-Requires: ()
+;; Package-Requires: ((emacs "24.3"))
 
 ;; This file is NOT part of GNU Emacs.
 
