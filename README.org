@@ -1,5 +1,5 @@
 * keyswap-mode.el
-Swap bindings between two keys
+Swap bindings between pairs of keys
 
 This allows the easy toggling of bindings by turning off and on =keyswap-mode=.
 ** Install
@@ -11,6 +11,8 @@ Turn on =keyswap-mode= with
 keyswap-mode is a minor mode that allows swapping the commands of two keys.
 It comes with a default set of keys to swap of the number keys and their
 shifted counterparts along with the '-' and '_' key.
+This is different to the function `keyboard-translate' as swaps may be done
+on a per-major-mode basis.
 This is generally useful in programming languages where symbols are more
 often used than numbers.
 

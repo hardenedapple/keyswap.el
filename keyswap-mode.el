@@ -1,4 +1,4 @@
-;;; keyswap-mode.el --- swap bindings between two keys
+;;; keyswap-mode.el --- swap bindings between pairs of keys
 
 ;; Copyright (C) 2016 Matthew Malcomson
 
@@ -38,6 +38,8 @@
 ;; keyswap-mode is a minor mode that allows swapping the commands of two keys.
 ;; It comes with a default set of keys to swap of the number keys and their
 ;; shifted counterparts along with the '-' and '_' key.
+;; This is different to the function `keyboard-translate' as swaps may be done
+;; on a per-major-mode basis.
 ;; This is generally useful in programming languages where symbols are more
 ;; often used than numbers.
 ;;
@@ -225,7 +227,7 @@ First off, if this minor mode is activated before others that change the current
           minor-mode-overriding-map-alist)))
 
 (defun keyswap-update-keys ()
-  "Update the buffer-local keymap currently used for `keyswap-mode'."
+  "Update the buffer-local keymap currently used for function `keyswap-mode'."
   (interactive)
   (when (assoc 'keyswap-mode minor-mode-overriding-map-alist)
     (let ((currently-on keyswap-mode))
@@ -265,22 +267,22 @@ First off, if this minor mode is activated before others that change the current
    keyswaps))
 
 (defun keyswap-include-braces ()
-  "Hook to make `keyswap-mode' include {,[, and },]."
+  "Hook to make function `keyswap-mode' swap {,[, and },]."
   (keyswap-add-pairs ?\[ ?\{   ?\] ?\} )
   (keyswap-update-keys))
 
 (defun keyswap-include-quotes ()
-  "Hook to make `keyswap-mode' include \" and '."
+  "Hook to make function `keyswap-mode' swap \" and '."
   (keyswap-add-pairs ?\' ?\")
   (keyswap-update-keys))
 
 (defun keyswap-tac-underscore-exception ()
-  "Hook to make `keyswap-mode' ignore - and _."
+  "Hook to make function `keyswap-mode' ignore - and _."
   (keyswap-remove-pairs ?- ?_)
   (keyswap-update-keys))
 
 (defun keyswap-colon-semicolon ()
-  "Hook to make `keyswap-mode' swap : and ;."
+  "Hook to make function `keyswap-mode' swap : and ;."
   (keyswap-add-pairs ?: ?\;)
   (keyswap-update-keys))
 
