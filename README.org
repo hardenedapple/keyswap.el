@@ -1,14 +1,14 @@
-* keyswap-mode.el
+* keyswap.el
 Swap bindings between pairs of keys
 
 This allows the easy toggling of bindings by turning off and on =keyswap-mode=.
 ** Install
-Download =keyswap-mode.el=, add to emacs load-path with
+Download =keyswap.el=, add to emacs load-path with
 : (add-to-list 'load-path "/path/to/directory/containing/this/file/")
 ** Usage
 Turn on =keyswap-mode= with
 : (keyswap-mode)
-keyswap-mode is a minor mode that allows swapping the commands of two keys.
+keyswap is a minor mode that allows swapping the commands of two keys.
 It comes with a default set of keys to swap of the number keys and their
 shifted counterparts along with the '-' and '_' key.
 This is different to the function `keyboard-translate' as swaps may be done
@@ -19,8 +19,8 @@ often used than numbers.
 To use keyswap-mode, make sure this file is in the Emacs load-path:
 :  (add-to-list 'load-path "/path/to/directory/or/file")
 
-Then require keyswap-mode:
-:  (require 'keyswap-mode)
+Then require keyswap:
+:  (require 'keyswap)
 
 To toggle between swapped and not-swapped sets of keys, use the command
 =(keyswap-mode)= or =M-x keyswap-mode=

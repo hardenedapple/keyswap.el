@@ -1,4 +1,4 @@
-;;; keyswap-mode.el --- swap bindings between pairs of keys
+;;; keyswap.el --- swap bindings between pairs of keys
 
 ;; Copyright (C) 2016 Matthew Malcomson
 
@@ -28,14 +28,14 @@
 ;; Keywords: convenience
 ;; Version: 0.1.0
 ;; Package-Version: 20160722.2100
-;; URL: http://github.com/hardenedapple/keyswap-mode
+;; URL: http://github.com/hardenedapple/keyswap
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This file is NOT part of GNU Emacs.
 
 ;;; Commentary:
 
-;; keyswap-mode is a minor mode that allows swapping the commands of two keys.
+;; keyswap is a minor mode that allows swapping the commands of two keys.
 ;; It comes with a default set of keys to swap of the number keys and their
 ;; shifted counterparts along with the '-' and '_' key.
 ;; This is different to the function `keyboard-translate' as swaps may be done
@@ -46,8 +46,8 @@
 ;; To use keyswap-mode, make sure this file is in the Emacs load-path:
 ;;   (add-to-list 'load-path "/path/to/directory/or/file")
 ;;
-;; Then require keyswap-mode:
-;;   (require 'keyswap-mode)
+;; Then require keyswap:
+;;   (require 'keyswap)
 
 ;; To toggle between swapped and not-swapped sets of keys, use the command
 ;; (keyswap-mode) or M-x keyswap-mode
@@ -287,6 +287,6 @@ First off, if this minor mode is activated before others that change the current
   (keyswap-add-pairs ?: ?\;)
   (keyswap-update-keys))
 
-(provide 'keyswap-mode)
+(provide 'keyswap)
 
-;;; keyswap-mode.el ends here
+;;; keyswap.el ends here
