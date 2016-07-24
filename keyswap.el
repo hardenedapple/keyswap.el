@@ -99,7 +99,22 @@
 ;; In order to keep the `keyswap-mode' mappings in sync it is recommended you
 ;; add `keyswap-update-keys' to the relevant hook.
 ;; (add-hook 'paredit-mode-hook 'keyswap-update-keys)
-
+;;
+;; One package that requires more than the normal amount of configuration is the
+;; `wrap-region' package.
+;; Because this changes the bindings on certain keys, it requires
+;; `keyswap-update-keys' to be in its hook.
+;; : (add-hook 'wrap-region-mode-hook 'keyswap-update-keys)
+;; Due to the way that it falls back to inserting a single character when the
+;; region is not active, you need an advice around `wrap-region-fallback' that
+;; ensures `keyswap-mode' is not on at the time it is called.
+;;   (defadvice wrap-region-fallback (around keyswap-negate protect activate)
+;;     "Ensure that `keyswap-mode' is not active when
+;;     `wrap-region-fallback' is getting called."
+;;     (let ((currently-on keyswap-mode))
+;;       (when currently-on (keyswap-mode 0))
+;;       ad-do-it
+;;       (when currently-on (keyswap-mode 1))))
 
 
 ;;; Code:
