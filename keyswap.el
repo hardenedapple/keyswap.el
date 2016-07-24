@@ -130,21 +130,18 @@ the false environment where `last-command-event' is KEY"
       ;; I need to create the form when this function is used in order to
       ;; programatically create the docstring for the lambda function.
       ;; This is the reason for the `eval' layer of indirection.
-      ;;
-      ;; Seeing as we're already using `eval', and we need lexical bindings for
-      ;; this lambda form, then we may as well put the bindings into the
-      ;; environment with the second argument to `eval'.
       (let ((first-key (aref key 0)))
         (eval
-         `(lambda (&optional arg return-command)
-            ,(format (concat keyswap-command-docstring "\"%c\"") first-key)
-            (interactive "p")
-            (if return-command
-                old-binding
-              (let ((last-command-event current-key))
-                (call-interactively old-binding))))
-         `((current-key . ,first-key)
-           (old-binding . ,current-binding)))))))
+         `(let ((current-key ,first-key)
+                (old-binding current-binding))
+            (lambda (&optional arg return-command)
+              ,(format (concat keyswap-command-docstring "\"%c\"") first-key)
+              (interactive "p")
+              (if return-command
+                  old-binding
+                (let ((last-command-event current-key))
+                  (call-interactively old-binding)))))
+         t)))))
 
 (defun keyswap-swap-these (left-key right-key keymap)
   "Puts alternate bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
