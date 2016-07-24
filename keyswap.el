@@ -28,7 +28,7 @@
 ;; Keywords: convenience
 ;; Version: 0.1.0
 ;; Package-Version: 20160722.2100
-;; URL: http://github.com/hardenedapple/keyswap
+;; URL: http://github.com/hardenedapple/keyswap.el
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -94,6 +94,11 @@
 ;;
 ;; To toggle between having keys swapped and not, just turn on and off
 ;; `keyswap-mode'.
+;;
+;; Some common packages like `paredit' change bindings on some keys.
+;; In order to keep the `keyswap-mode' mappings in sync it is recommended you
+;; add `keyswap-update-keys' to the relevant hook.
+;; (add-hook 'paredit-mode-hook 'keyswap-update-keys)
 
 
 

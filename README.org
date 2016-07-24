@@ -69,3 +69,8 @@ and then add modifications for each major-mode you desire accordingly, e.g.
 
 To toggle between having keys swapped and not, just turn on and off
 =keyswap-mode=.
+
+Some common packages like =paredit= change bindings on some keys.
+In order to keep the =keyswap-mode= mappings in sync it is recommended you
+add =keyswap-update-keys= to the relevant hook.
+: (add-hook 'paredit-mode-hook 'keyswap-update-keys)
