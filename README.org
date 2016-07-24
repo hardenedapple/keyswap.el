@@ -1,5 +1,5 @@
 * keyswap.el
-Swap bindings between pairs of keys
+Swap bindings between key pairs
 
 This allows the easy toggling of bindings by turning off and on =keyswap-mode=.
 ** Install

@@ -1,4 +1,4 @@
-;;; keyswap.el --- swap bindings between pairs of keys
+;;; keyswap.el --- swap bindings between key pairs
 
 ;; Copyright (C) 2016 Matthew Malcomson
 
@@ -124,28 +124,27 @@ the false environment where `last-command-event' is KEY"
              current-docstring
              (string-prefix-p keyswap-command-docstring current-docstring))
         (funcall current-binding nil t)
-      ;; `lexical-let' uses `cl--function-convert' which wraps any lambda functions
-      ;; in another lambda function, passing in arguments to pretend that we're
-      ;; using lexical variables.
-      ;; `cl--function-convert' uses a special case for docstrings and (interactive)
-      ;; forms to bring them outside the `lambda' form being enclosed.
-      ;; This special case doesn't work unless the docstring is recogniseable as a
-      ;; string at compile time.
-      ;; Hence I'm separating creating the form and evaluating it into two steps
-      ;; so that I can create the form with a string literal for
-      ;; `cl--function-convert' to recognise.
-      ;; That's the reason for the `eval' layer of indirection.
-      (let ((docstring (format (concat keyswap-command-docstring "\"%c\"")
-                               (aref key 0))))
+      ;; In order to make the lexical bindings stick around, I need to create
+      ;; the lambda function here instead of returning the form to be used
+      ;; later.
+      ;; I need to create the form when this function is used in order to
+      ;; programatically create the docstring for the lambda function.
+      ;; This is the reason for the `eval' layer of indirection.
+      ;;
+      ;; Seeing as we're already using `eval', and we need lexical bindings for
+      ;; this lambda form, then we may as well put the bindings into the
+      ;; environment with the second argument to `eval'.
+      (let ((first-key (aref key 0)))
         (eval
-         `(lexical-let ((current-key (aref key 0)) (old-binding current-binding))
-            (lambda (&optional arg return-command)
-              ,docstring
-              (interactive "p")
-              (if return-command
-                  old-binding
-                (let ((last-command-event current-key))
-                  (call-interactively old-binding))))))))))
+         `(lambda (&optional arg return-command)
+            ,(format (concat keyswap-command-docstring "\"%c\"") first-key)
+            (interactive "p")
+            (if return-command
+                old-binding
+              (let ((last-command-event current-key))
+                (call-interactively old-binding))))
+         `((current-key . ,first-key)
+           (old-binding . ,current-binding)))))))
 
 (defun keyswap-swap-these (left-key right-key keymap)
   "Puts alternate bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
