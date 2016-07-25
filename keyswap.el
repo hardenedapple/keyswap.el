@@ -144,24 +144,27 @@ the false environment where `last-command-event' is KEY"
              current-docstring
              (string-prefix-p keyswap-command-docstring current-docstring))
         (funcall current-binding nil t)
-      ;; In order to make the lexical bindings stick around, I need to create
-      ;; the lambda function here instead of returning the form to be used
-      ;; later.
       ;; I need to create the form when this function is used in order to
-      ;; programatically create the docstring for the lambda function.
-      ;; This is the reason for the `eval' layer of indirection.
-      (let ((first-key (aref key 0)))
-        (eval
-         `(let ((current-key ,first-key)
-                (old-binding current-binding))
-            (lambda (&optional arg return-command)
-              ,(format (concat keyswap-command-docstring "\"%c\"") first-key)
-              (interactive "p")
-              (if return-command
-                  old-binding
-                (let ((last-command-event current-key))
-                  (call-interactively old-binding)))))
-         t)))))
+      ;; programatically create the docstring for the `lambda' form.
+      ;;
+      ;; In order to keep the value of current-binding in the `lambda' form that
+      ;; results I either need lexical binding or to store the value in a hidden
+      ;; symbol.
+      ;;
+      ;; Using lexical binding would require evaluating the `lambda' form in the
+      ;; current lexical environment, which means we have to create the form and
+      ;; then pass it to `eval'.
+      ;; I find creating the hidden symbol to be neater.
+      (let ((current-key (aref key 0))
+            (old-binding (make-symbol "--old-binding--")))
+        (setf (symbol-value old-binding) current-binding)
+        `(lambda (&optional arg return-command)
+           ,(format (concat keyswap-command-docstring "\"%c\"") current-key)
+           (interactive "p")
+           (if return-command
+               ,old-binding
+             (let ((last-command-event ,current-key))
+               (call-interactively ,old-binding))))))))
 
 (defun keyswap-swap-these (left-key right-key keymap)
   "Puts alternate bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
