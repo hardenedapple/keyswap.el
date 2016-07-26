@@ -104,7 +104,7 @@
 ;; `wrap-region' package.
 ;; Because this changes the bindings on certain keys, it requires
 ;; `keyswap-update-keys' to be in its hook.
-;; : (add-hook 'wrap-region-mode-hook 'keyswap-update-keys)
+;; (add-hook 'wrap-region-mode-hook 'keyswap-update-keys)
 ;; Due to the way that it falls back to inserting a single character when the
 ;; region is not active, you need an advice around `wrap-region-fallback' that
 ;; ensures `keyswap-mode' is not on at the time it is called.
@@ -115,11 +115,19 @@
 ;;       (when currently-on (keyswap-mode 0))
 ;;       ad-do-it
 ;;       (when currently-on (keyswap-mode 1))))
+;;
+;;
+;; Though the conveniance functions don't account for key chords (e.g. C-x j r),
+;; the utility functions work well with them.
+;; Hence you can manually swap these with code similar to the below.
+;; (push (cons [?\ ?r ?j] [?\ ?r ?\ ]) keyswap-pairs)
+;; (keyswap-update-keys)
 
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
+(require 'edmacro)
 
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
@@ -155,14 +163,22 @@ the false environment where `last-command-event' is KEY"
       ;; current lexical environment, which means we have to create the form and
       ;; then pass it to `eval'.
       ;; I find creating the hidden symbol to be neater.
-      (let ((current-key (aref key 0))
+      (let ((current-key (aref key (- (length key) 1)))
             (old-binding (make-symbol "--old-binding--")))
         (setf (symbol-value old-binding) current-binding)
         `(lambda (&optional arg return-command)
-           ,(format (concat keyswap-command-docstring "\"%c\"") current-key)
+           ,(concat keyswap-command-docstring "\""
+                    (edmacro-format-keys
+                     (apply #'concatenate 'string
+                            (mapcar
+                             (lambda (arg) (format "%c" arg))
+                             key)))
+                    "\"")
            (interactive "p")
            (if return-command
                ,old-binding
+             ;; Set `last-command-event' so that `self-insert-char' behaves as
+             ;; expected.
              (let ((last-command-event ,current-key))
                (call-interactively ,old-binding))))))))
 

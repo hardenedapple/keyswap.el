@@ -92,3 +92,9 @@ ensures =keyswap-mode= is not on at the time it is called.
       ad-do-it
       (when currently-on (keyswap-mode 1))))
 #+END_SRC
+
+Though the conveniance functions don't account for key chords (e.g. =C-x j r=),
+the utility functions work well with them.
+Hence you can manually swap these with code similar to the below.
+: (push (cons [?\ ?r ?j] [?\ ?r ?\ ]) keyswap-pairs)
+: (keyswap-update-keys)
