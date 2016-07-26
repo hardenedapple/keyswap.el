@@ -3,8 +3,10 @@ Swap bindings between key pairs
 
 This allows the easy toggling of bindings by turning off and on =keyswap-mode=.
 ** Install
-Download =keyswap.el=, add to emacs load-path with
+Install from =MELPA= (recommended) or download =keyswap.el=, add to emacs
+load-path with
 : (add-to-list 'load-path "/path/to/directory/containing/this/file/")
+then =require= the package.
 ** Usage
 Turn on =keyswap-mode= with
 : (keyswap-mode)
