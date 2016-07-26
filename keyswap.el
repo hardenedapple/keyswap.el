@@ -173,7 +173,9 @@ the false environment where `last-command-event' is KEY"
                             (mapcar
                              (lambda (arg) (format "%c" arg))
                              key)))
-                    "\"")
+                    "\""
+                    "\n\nWrapping the command\n\n"
+                    (format "%S" current-binding))
            (interactive "p")
            (if return-command
                ,old-binding
