@@ -26,8 +26,8 @@
 ;; Maintainer: Matthew Malcomson <hardenedapple@gmail.com>
 ;; Created: 23 Jul 2016
 ;; Keywords: convenience
-;; Version: 0.1.0
-;; Package-Version: 20160722.2100
+;; Version: 0.1.1
+;; Package-Version: 20160730.1620
 ;; URL: http://github.com/hardenedapple/keyswap.el
 ;; Package-Requires: ((emacs "24.3"))
 
@@ -122,6 +122,12 @@
 ;; Hence you can manually swap these with code similar to the below.
 ;; (push (cons [?\ ?r ?j] [?\ ?r ?\ ]) keyswap-pairs)
 ;; (keyswap-update-keys)
+;;
+;;
+;; In order to have the same swapped keys in `isearch-mode' as in the buffer
+;; you're currently editing, you can add
+;; (keyswap-isearch-setup)
+;; into your config.
 
 
 ;;; Code:
@@ -131,22 +137,34 @@
 
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
-(defun keyswap-equivalent-binding (key)
-  "NOTE -- this function is hacky but useful.
+;; This function is a little misleadingly named.
+;; When it is called on a normal command it does in fact return the equivalent
+;; command that would be run were that key to be pressed.
+;; However, when it's run on a function that it created it returns the original
+;; function.
+;; This could then be bound to a third key, and that key would then act
+;; differently to how the original one did (e.g. with `self-insert-command').
+(defun keyswap-equivalent-binding (key &optional keymap)
+  "Return a command that is equivalent to pressing KEY.
 
-I use the docstring of a function to recognise it, this docstring
-should begin with `keyswap-command-docstring'.
+If the optional argument KEYMAP is provided, wrap the command
+bound to KEY in KEYMAP. Otherwise wrap whatever command would be
+run if KEY were pressed in the current state of the editor.
 
-Finds the command that is run when `key' is pressed.
+If the command that would be run is a `lambda' function created
+by this function then return the original command that was
+wrapped.
 
-If this commands `documentation' starts with
-`keyswap-command-docstring' assume it is a wrapper previously
-created by this function.
-Then return the result of (command nil t).
+NOTE -- this function is hacky but useful.
+
+I use the `documentation' of a function to recognise whether a
+command has been created using this function, the docstring would
+then begin with `keyswap-command-docstring'.
 
 Otherwise create a `lambda' function that runs that command under
 the false environment where `last-command-event' is KEY"
-  (let* ((current-binding (key-binding key))
+  (let* ((current-binding
+          (if keymap (lookup-key keymap key) (key-binding key)))
          (current-docstring (documentation current-binding)))
     (if (and (listp current-binding)
              current-docstring
@@ -184,12 +202,15 @@ the false environment where `last-command-event' is KEY"
              (let ((last-command-event ,current-key))
                (call-interactively ,old-binding))))))))
 
-(defun keyswap-swap-these (left-key right-key keymap)
-  "Puts alternate bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
+(defun keyswap-swap-these (left-key right-key keymap &optional base-map)
+  "Puts swapped bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
+
+If the optional BASE-MAP is defined, only search for original
+bindings there.  Otherwise, original bindings are found from what
+would be run in the current editor state.
 
 LEFT-KEY and RIGHT-KEY should be two objects valid in a call to
-`key-binding'.  Makes a new binding in KEYMAP or the local
-keymap, as used by `local-set-key'.
+`key-binding'.
 
 If a mapping has a normal function, we bind the other key to a
 `lambda' function that calls the original with a masked
@@ -198,12 +219,9 @@ If a mapping has a normal function, we bind the other key to a
 These `lambda' functions are marked by their documentation
 string (*very* hacky -- I know), and if this documentation string
 is noticed, they are called with arguments so they return their
-wrapped function.
-
-If KEYMAP is defined, binds keys in that map, else uses
-`current-local-map'"
-  (let ((left-function (keyswap-equivalent-binding left-key))
-        (right-function (keyswap-equivalent-binding right-key)))
+wrapped function."
+  (let ((left-function (keyswap-equivalent-binding left-key base-map))
+        (right-function (keyswap-equivalent-binding right-key base-map)))
     (define-key keymap left-key right-function)
     (define-key keymap right-key left-function)))
 
@@ -323,6 +341,81 @@ First off, if this minor mode is activated before others that change the current
   "Hook to make function `keyswap-mode' swap : and ;."
   (keyswap-add-pairs ?: ?\;)
   (keyswap-update-keys))
+
+
+;; `isearch-mode' is a little tricky to set up.
+;;
+;; Instead of adding a keymap somewhere it makes `isearch-mode-map' the
+;; `overriding-terminal-local-map'.  This means we can't put the `keyswap-mode'
+;; mappings in any variable to override what `isearch-mode' has defined.
+;;
+;; Instead, we overwrite the mappings in `isearch-mode-map' and put them back
+;; when `isearch-mode' finishes.
+;;
+;; When `isearch-mode' starts, we check whether `keyswap-mode' is currently
+;; active and if so iterate through all keys in `keyswap-pairs' replacing those
+;; keys directly in `isearch-mode-map'.
+;;
+;; When `isearch-mode' finishes, we do the same thing, using the fact that
+;;`keyswap-equivalent-binding' returns the original wrapped command when called
+;; on a `lambda' function it created itself.
+;;
+;; Hence after our hook has been called twice, the bindings in
+;;`isearch-mode-map' are the same as they were originally.
+
+(defvar-local keyswap-isearch-swapped-pairs nil
+  "An indicator of whether the `isearch-mode-map' keymap has been
+  swapped to match the current buffers swapped keymap.
+
+This buffer local variable contains the pairs that were swapped
+in `isearch-mode-map' when `isearch-mode' was activated.")
+
+;; XXX TODO -- Get pairs to swap from currently shifted keymap instead of
+;; `keyswap-pairs'.
+;; `keyswap-pairs' is local to one buffer, but all observable actions are
+;; across all buffers in the same major-mode.
+;; I should have the same split when propagating changes out to
+;; `isearch-mode', in that the keys that get swapped are the same keys that
+;; are already swapped in the current buffer.
+;;
+;; XXX TODO -- Account for someone updating `keyswap-pairs' while in
+;; `isearch-mode' (i.e. wanting to change the mappings while in
+;; `isearch-mode').
+;; This is something that shouldn't really happen, but it will happen.
+;;
+;; XXX TODO -- Account for someone turning `keyswap-mode' off or on while in
+;; `isearch-mode'.
+;; Again, something that shouldn't, but will, happen.
+(defun keyswap-isearch-start-hook ()
+  "Hook to keep the same toggled keys from `keyswap-mode' in the
+current buffer when searching with `isearch-mode'."
+  (when keyswap-mode
+    (dolist (key-pair keyswap-pairs)
+      (keyswap-swap-these (car key-pair) (cdr key-pair)
+                          isearch-mode-map isearch-mode-map))
+    (setq-local keyswap-isearch-swapped-pairs (copy-list keyswap-pairs))))
+
+(defun keyswap-isearch-end-hook ()
+  "Remove keys swapped with `keyswap-isearch-start-hook' from
+  `isearch-mode-map'."
+  (when keyswap-isearch-swapped-pairs
+    (dolist (key-pair keyswap-isearch-swapped-pairs)
+      (keyswap-swap-these (car key-pair) (cdr key-pair)
+                          isearch-mode-map isearch-mode-map))
+    (setq-local keyswap-isearch-swapped-pairs nil)))
+
+(defun keyswap-isearch-setup ()
+  "Add hooks so that `keyswap-mode' is propagated out to
+  `isearch-mode'."
+  (add-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
+  ;; I have to remove the swapped keys from `isearch-mode-map' because it is an
+  ;; editor global map, and I need to not affect other modes.
+  (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook))
+
+(defun keyswap-isearch-teardown ()
+  "Remove hooks to propagate `keyswap-mode' to `isearch-mode'."
+  (remove-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
+  (remove-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook))
 
 (provide 'keyswap)
 
