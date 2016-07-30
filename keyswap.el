@@ -282,6 +282,9 @@ First off, if this minor mode is activated before others that change the current
     (push (cons 'keyswap-mode (keyswap-swapped-keymap))
           minor-mode-overriding-map-alist)))
 
+(defvar keyswap-update-keys-hook nil
+  "Hook run just after calling `keyswap-update-keys'.")
+
 (defun keyswap-update-keys ()
   "Update the buffer-local keymap currently used for function `keyswap-mode'."
   (interactive)
@@ -290,7 +293,8 @@ First off, if this minor mode is activated before others that change the current
       (when currently-on (keyswap-mode 0))
       (setf (cdr (assoc 'keyswap-mode minor-mode-overriding-map-alist))
             (keyswap-swapped-keymap))
-      (when currently-on (keyswap-mode t)))))
+      (when currently-on (keyswap-mode t)))
+    (run-hooks 'keyswap-update-keys-hook)))
 
 (defun keyswap-act-on-pairs (action-fn keyswaps)
   "Call ACTION-FN on successive pairs of KEYSWAPS."
@@ -362,14 +366,7 @@ First off, if this minor mode is activated before others that change the current
 ;;
 ;; Hence after our hook has been called twice, the bindings in
 ;;`isearch-mode-map' are the same as they were originally.
-
-(defvar-local keyswap-isearch-swapped-pairs nil
-  "An indicator of whether the `isearch-mode-map' keymap has been
-  swapped to match the current buffers swapped keymap.
-
-This buffer local variable contains the pairs that were swapped
-in `isearch-mode-map' when `isearch-mode' was activated.")
-
+;;
 ;; XXX TODO -- Get pairs to swap from currently shifted keymap instead of
 ;; `keyswap-pairs'.
 ;; `keyswap-pairs' is local to one buffer, but all observable actions are
@@ -381,11 +378,27 @@ in `isearch-mode-map' when `isearch-mode' was activated.")
 ;; XXX TODO -- Account for someone updating `keyswap-pairs' while in
 ;; `isearch-mode' (i.e. wanting to change the mappings while in
 ;; `isearch-mode').
-;; This is something that shouldn't really happen, but it will happen.
 ;;
 ;; XXX TODO -- Account for someone turning `keyswap-mode' off or on while in
 ;; `isearch-mode'.
 ;; Again, something that shouldn't, but will, happen.
+;;
+;; These last two shouldn't really happen, whenever someone does anything
+;; non-standard in `isearch-mode' it just takes them out of that mode and puts
+;; them back in the normal buffer.  If anyone is doing anything special with the
+;; combination of these modes then they may not want automatic updating (who am
+;; I to assume).
+;; If I do want to automatically update the `isearch-mode' stuff upon calling
+;;`keyswap-update-keys' then I just need to add `keyswap-isearch-start-hook' and
+;;`keyswap-isearch-end-hook' to `keyswap-update-keys' hook and that should work.
+;;
+(defvar-local keyswap-isearch-swapped-pairs nil
+  "An indicator of whether the `isearch-mode-map' keymap has been
+  swapped to match the current buffers swapped keymap.
+
+This buffer local variable contains the pairs that were swapped
+in `isearch-mode-map' when `isearch-mode' was activated.")
+
 (defun keyswap-isearch-start-hook ()
   "Hook to keep the same toggled keys from `keyswap-mode' in the
 current buffer when searching with `isearch-mode'."
