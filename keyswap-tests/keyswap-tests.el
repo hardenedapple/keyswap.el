@@ -155,20 +155,6 @@
      ;; `documentation'
      (should (string-match-p (format "%S" [?a]) wrapped-docstring)))))
 
-(ert-deftest keyswap-future-enhancements ()
-  "Tests that future enhancements should make pass."
-  :expected-result :failed
-  (let* ((test-command (lambda () (interactive)
-                         (cons last-command-event (this-command-keys-vector))))
-         (wrapped-command (keyswap--equivalent-command [?a] test-command)))
-    ;; * Return value calls COMMAND with `this-command-keys-vector' set to [KEY]
-    ;; XXX This is actually quite strange -- as far as I can see, the
-    ;; `call-interactively' function just doesn't do what its documentation says
-    ;; it will.
-    ;; I may be misreading, but currently I can't find out how to get this to
-    ;; work at all.
-    (should (equal (cdr (funcall wrapped-command)) [?a]))))
-
 (ert-deftest keyswap-test-equivalent-binding ()
   "Check that `keyswap-equivalent-binding' makes the correct decision about what
 to do depending on the state of the keymap."
@@ -199,6 +185,27 @@ to do depending on the state of the keymap."
       (should (equal (keyswap-equivalent-binding [?a] remapped-map)
                      (keyswap--equivalent-command [?a] 'next-line))))))
 
+(defun keyswap--test-all-pairs-swapped (keyswap-pairs current-map original-map
+                                                      &optional in-place)
+  "Check all and only `keyswap-pairs' are swapped."
+  (let ((keyswap-both-ways
+         (append keyswap-pairs (mapcar (lambda (val) (cons (cdr val) (car val)))
+                                       keyswap-pairs)))
+        (keyswap-all-elements
+         (loop for (left . right) in keyswap-pairs append (list left right))))
+    ;; All keys in `keyswap-pairs' have been mapped as their partner.
+    (dolist (key-pair keyswap-both-ways)
+      (should (equal (lookup-key current-map (car key-pair))
+                     (keyswap--equivalent-command
+                      (cdr key-pair)
+                      (lookup-key original-map (cdr key-pair))))))
+    ;; Other keys are unaffected
+    (loop for key from 1 upto 255
+          when (not (member (vector key) keyswap-all-elements))
+          do (should (equal (lookup-key current-map (vector key))
+                            (if in-place (lookup-key original-map (vector key))
+                              nil))))))
+
 (ert-deftest keyswap-isearch-hooks ()
   "Ensure that `keyswap-isearch-start-hook' and
   `keyswap-isearch-end-hook' behave properly.
@@ -208,31 +215,62 @@ functions and other such niceties."
   (keyswap--with-temp-list
    (let* ((original-isearch-map (copy-keymap isearch-mode-map))
           (isearch-mode-map (copy-keymap isearch-mode-map))
-          (keyswap-mode t)
-          (keyswap-both-ways
-           (append keyswap-pairs (mapcar (lambda (val) (cons (cdr val) (car val)))
-                                         keyswap-pairs)))
-          (keyswap-all-elements
-           (loop for (left . right) in keyswap-pairs append (list left right))))
+          (keyswap-mode t))
      (keyswap-isearch-start-hook)
      (unwind-protect
          (progn
            ;; Replaces commands in place in `isearch-mode-map'
-           (dolist (key-pair keyswap-both-ways)
-             (should (equal (lookup-key isearch-mode-map (car key-pair))
-                            (keyswap--equivalent-command
-                             (cdr key-pair)
-                             (lookup-key original-isearch-map (cdr key-pair))))))
+           (keyswap--test-all-pairs-swapped
+            keyswap-pairs isearch-mode-map original-isearch-map t)
            ;; Should add `keyswap-mode-end-hook' to `isearch-mode-end-hook'
-           (should (member 'keyswap-isearch-end-hook isearch-mode-end-hook))
-           ;; Other keys are unaffected
-           (loop for key from 1 upto 255
-                 when (not (member (vector key) keyswap-all-elements))
-                 do (should (equal (lookup-key isearch-mode-map (vector key))
-                                   (lookup-key original-isearch-map
-                                               (vector key))))))
+           (should (member 'keyswap-isearch-end-hook isearch-mode-end-hook)))
        (keyswap-isearch-end-hook))
      (should (equal isearch-mode-map original-isearch-map)))))
+
+(ert-deftest keyswap-test-swapped-keymap ()
+  "`keyswap-swapped-keymap' does what it's supposed to."
+  (keyswap--with-temp-list
+   ;; We temporarily set `overriding-terminal-local-map' to `global-map', which
+   ;; means all keys looked up will be found in that single map.
+   ;; We use `global-map' because that's a keymap that has most keys bound to
+   ;; something.
+   (let ((overriding-terminal-local-map global-map))
+     (keyswap--test-all-pairs-swapped
+      keyswap-pairs (keyswap-swapped-keymap) overriding-terminal-local-map))))
+
+(defmacro keyswap--matches-newgen ()
+  `(equal (cdr (assoc 'keyswap-mode minor-mode-overriding-map-alist))
+          (keyswap-swapped-keymap)))
+
+(ert-deftest keyswap-update-modifications ()
+  "Check that `keyswap-update-keys' does what it's supposed to."
+  (keyswap--with-temp-list
+   (let ((minor-mode-overriding-map-alist
+          (list (list 'keyswap-mode 'keymap)))
+         (keyswap-mode nil))
+     (keyswap-update-keys)
+     (should (keyswap--matches-newgen))
+     (keyswap-add-pairs ?a ?b)
+     (keyswap-update-keys)
+     (should (keyswap--matches-newgen))
+     (setq keyswap-mode t)
+     (should-not (keyswap--matches-newgen)))))
+
+
+
+(ert-deftest keyswap-future-enhancements ()
+  "Tests that future enhancements should make pass."
+  :expected-result :failed
+  (let* ((test-command (lambda () (interactive)
+                         (cons last-command-event (this-command-keys-vector))))
+         (wrapped-command (keyswap--equivalent-command [?a] test-command)))
+    ;; * Return value calls COMMAND with `this-command-keys-vector' set to [KEY]
+    ;; XXX This is actually quite strange -- as far as I can see, the
+    ;; `call-interactively' function just doesn't do what its documentation says
+    ;; it will.
+    ;; I may be misreading, but currently I can't find out how to get this to
+    ;; work at all.
+    (should (equal (cdr (funcall wrapped-command)) [?a]))))
 
 
 ;;; TODO

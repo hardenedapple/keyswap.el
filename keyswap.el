@@ -315,6 +315,8 @@ First off, if this minor mode is activated before others that change the current
   (interactive)
   (when (assoc 'keyswap-mode minor-mode-overriding-map-alist)
     (let ((currently-on keyswap-mode))
+      ;; Make sure to turn `keyswap-mode' off when calculating the swapped
+      ;; keymap, otherwise we swap back elements previously swapped.
       (when currently-on (keyswap-mode 0))
       (setf (cdr (assoc 'keyswap-mode minor-mode-overriding-map-alist))
             (keyswap-swapped-keymap))
@@ -455,6 +457,10 @@ current buffer when searching with `isearch-mode'."
     ;; (either that or get them to agree on appending our hooks to
     ;; `isearch-mode-end-hook').
     (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook)))
+
+
+;; TODO XXX -- Add support for avy and ace-jump (may just be finding the correct
+;; hook, it may be something else)
 
 (provide 'keyswap)
 
