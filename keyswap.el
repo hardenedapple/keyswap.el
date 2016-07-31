@@ -164,7 +164,10 @@ then begin with `keyswap-command-docstring'.
 Otherwise create a `lambda' function that runs that command under
 the false environment where `last-command-event' is KEY"
   (let* ((current-binding
-          (if keymap (lookup-key keymap key) (key-binding key)))
+          (let ((direct-command
+                 (if keymap (lookup-key keymap key) (key-binding key))))
+            (or (command-remapping direct-command nil keymap)
+                direct-command)))
          (current-docstring (documentation current-binding)))
     (if (and (listp current-binding)
              current-docstring
