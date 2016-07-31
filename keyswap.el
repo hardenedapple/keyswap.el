@@ -426,7 +426,7 @@ current buffer when searching with `isearch-mode'."
   (add-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
   ;; I have to remove the swapped keys from `isearch-mode-map' because it is an
   ;; editor global map, and I need to not affect other modes.
-  (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook))
+  (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook t))
 
 (defun keyswap-isearch-teardown ()
   "Remove hooks to propagate `keyswap-mode' to `isearch-mode'."
