@@ -137,6 +137,43 @@
 
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
+(defun keyswap--equivalent-command (key command)
+  "Return wrapped COMMAND so it's called as if bound to KEY.
+
+Generate a useful docstring for this command so it may be identified both
+programmatically and from inspection."
+  ;; I need to create the form when this function is used in order to
+  ;; programatically create the docstring for the `lambda' form.
+  ;;
+  ;; In order to keep the value of command in the `lambda' form that
+  ;; results I either need lexical binding or to store the value in a hidden
+  ;; symbol.
+  ;;
+  ;; Using lexical binding would require evaluating the `lambda' form in the
+  ;; current lexical environment, which means we have to create the form and
+  ;; then pass it to `eval'.
+  ;; I find creating the hidden symbol to be neater.
+  (let ((current-key (aref key (- (length key) 1)))
+        (old-binding (make-symbol "--old-binding--")))
+    (setf (symbol-value old-binding) command)
+    `(lambda (&optional arg return-command)
+       ,(concat keyswap-command-docstring "\""
+                (edmacro-format-keys
+                 (apply #'concatenate 'string
+                        (mapcar
+                         (lambda (arg) (format "%c" arg))
+                         key)))
+                "\""
+                "\n\nWrapping the command\n\n"
+                (format "%S" command))
+       (interactive "p")
+       (if return-command
+           ,old-binding
+         ;; Set `last-command-event' so that `self-insert-char' behaves as
+         ;; expected.
+         (let ((last-command-event ,current-key))
+           (call-interactively ,old-binding))))))
+
 ;; This function is a little misleadingly named.
 ;; When it is called on a normal command it does in fact return the equivalent
 ;; command that would be run were that key to be pressed.
@@ -173,37 +210,7 @@ the false environment where `last-command-event' is KEY"
              current-docstring
              (string-prefix-p keyswap-command-docstring current-docstring))
         (funcall current-binding nil t)
-      ;; I need to create the form when this function is used in order to
-      ;; programatically create the docstring for the `lambda' form.
-      ;;
-      ;; In order to keep the value of current-binding in the `lambda' form that
-      ;; results I either need lexical binding or to store the value in a hidden
-      ;; symbol.
-      ;;
-      ;; Using lexical binding would require evaluating the `lambda' form in the
-      ;; current lexical environment, which means we have to create the form and
-      ;; then pass it to `eval'.
-      ;; I find creating the hidden symbol to be neater.
-      (let ((current-key (aref key (- (length key) 1)))
-            (old-binding (make-symbol "--old-binding--")))
-        (setf (symbol-value old-binding) current-binding)
-        `(lambda (&optional arg return-command)
-           ,(concat keyswap-command-docstring "\""
-                    (edmacro-format-keys
-                     (apply #'concatenate 'string
-                            (mapcar
-                             (lambda (arg) (format "%c" arg))
-                             key)))
-                    "\""
-                    "\n\nWrapping the command\n\n"
-                    (format "%S" current-binding))
-           (interactive "p")
-           (if return-command
-               ,old-binding
-             ;; Set `last-command-event' so that `self-insert-char' behaves as
-             ;; expected.
-             (let ((last-command-event ,current-key))
-               (call-interactively ,old-binding))))))))
+      (keyswap--equivalent-command key current-binding))))
 
 (defun keyswap-swap-these (left-key right-key keymap &optional base-map)
   "Puts swapped bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.
