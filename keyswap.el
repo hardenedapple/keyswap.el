@@ -137,6 +137,8 @@
 
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
+;; We can't just use a keyboard macro as we want to swap the commands between
+;; two keys. A keyboard macro on both would put us into an infinite loop.
 (defun keyswap--equivalent-command (key command)
   "Return wrapped COMMAND so it's called as if bound to KEY.
 
@@ -179,8 +181,10 @@ programmatically and from inspection."
         (if return-command
             old-binding
           ;; Set `last-command-event' so that `self-insert-char' behaves as
-          ;; expected and use `call-interactively' to set the values that
-          ;; `this-command-keys-vector' will find.
+          ;; expected.
+          ;; Attempt to use `call-interactively' to set the values that
+          ;; `this-command-keys-vector' will find, but it doesn't seem to be
+          ;; working at the moment, and I can't figure out why.
           (let ((last-command-event current-key))
             (call-interactively old-binding nil key)))))
    t))
