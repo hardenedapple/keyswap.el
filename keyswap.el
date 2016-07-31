@@ -402,15 +402,6 @@ First off, if this minor mode is activated before others that change the current
 This buffer local variable contains the pairs that were swapped
 in `isearch-mode-map' when `isearch-mode' was activated.")
 
-(defun keyswap-isearch-start-hook ()
-  "Hook to keep the same toggled keys from `keyswap-mode' in the
-current buffer when searching with `isearch-mode'."
-  (when keyswap-mode
-    (dolist (key-pair keyswap-pairs)
-      (keyswap-swap-these (car key-pair) (cdr key-pair)
-                          isearch-mode-map isearch-mode-map))
-    (setq-local keyswap-isearch-swapped-pairs (copy-list keyswap-pairs))))
-
 (defun keyswap-isearch-end-hook ()
   "Remove keys swapped with `keyswap-isearch-start-hook' from
   `isearch-mode-map'."
@@ -418,20 +409,30 @@ current buffer when searching with `isearch-mode'."
     (dolist (key-pair keyswap-isearch-swapped-pairs)
       (keyswap-swap-these (car key-pair) (cdr key-pair)
                           isearch-mode-map isearch-mode-map))
-    (setq-local keyswap-isearch-swapped-pairs nil)))
+    (setq-local keyswap-isearch-swapped-pairs nil)
+    (remove-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook)))
 
-(defun keyswap-isearch-setup ()
-  "Add hooks so that `keyswap-mode' is propagated out to
-  `isearch-mode'."
-  (add-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
-  ;; I have to remove the swapped keys from `isearch-mode-map' because it is an
-  ;; editor global map, and I need to not affect other modes.
-  (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook t))
-
-(defun keyswap-isearch-teardown ()
-  "Remove hooks to propagate `keyswap-mode' to `isearch-mode'."
-  (remove-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
-  (remove-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook))
+(defun keyswap-isearch-start-hook ()
+  "Hook to keep the same toggled keys from `keyswap-mode' in the
+current buffer when searching with `isearch-mode'."
+  (when keyswap-mode
+    (dolist (key-pair keyswap-pairs)
+      (keyswap-swap-these (car key-pair) (cdr key-pair)
+                          isearch-mode-map isearch-mode-map))
+    (setq-local keyswap-isearch-swapped-pairs (copy-list keyswap-pairs))
+    ;; I have to remove the swapped keys from `isearch-mode-map' because it is an
+    ;; editor global map, and I need to not affect other modes.
+    ;; I can't just have `keyswap-isearch-end-hook' stored in
+    ;; `isearch-mode-end-hook' because other packages do similar to me by
+    ;; storing the original `isearch-mode-map' and replacing it in a function
+    ;; placed in `isearch-mode-end-hook'.
+    ;;
+    ;; Because they add this hook at the same time they're storing the original
+    ;; value, and they add the hook to the start of `isearch-mode-end-hook', in
+    ;; order to call our teardown hooks in the correct order I have to do the same.
+    ;; (either that or get them to agree on appending our hooks to
+    ;; `isearch-mode-end-hook').
+    (add-hook 'isearch-mode-end-hook 'keyswap-isearch-end-hook)))
 
 (provide 'keyswap)
 
