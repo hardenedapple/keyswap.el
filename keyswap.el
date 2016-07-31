@@ -149,32 +149,41 @@ programmatically and from inspection."
   ;; results I either need lexical binding or to store the value in a hidden
   ;; symbol.
   ;;
-  ;; Using lexical binding would require evaluating the `lambda' form in the
-  ;; current lexical environment, which means we have to create the form and
-  ;; then pass it to `eval'.
-  ;; I find creating the hidden symbol to be neater.
-  (let ((current-key (aref key (- (length key) 1)))
-        (old-binding (make-symbol "--old-binding--")))
-    (setf (symbol-value old-binding) command)
-    `(lambda (&optional arg return-command)
-       ,(concat keyswap-command-docstring "\""
-                (edmacro-format-keys
-                 (apply #'concatenate 'string
-                        (mapcar
-                         (lambda (arg) (format "%c" arg))
-                         key)))
-                "\""
-                "\n\nWrapping the command\n\n"
-                (format "%S" command)
-               "\n\nWith the key vector\n\n"
-               (format "%S" key))
-       (interactive "p")
-       (if return-command
-           ,old-binding
-         ;; Set `last-command-event' so that `self-insert-char' behaves as
-         ;; expected.
-         (let ((last-command-event ,current-key))
-           (call-interactively ,old-binding))))))
+  ;; Using lexical binding requires evaluating the `lambda' form in the current
+  ;; lexical environment, which means we have to create the form and then pass
+  ;; it to `eval', while using a hidden symbol doesn't require such indirection.
+  ;;
+  ;; On the other hand, using lexical binding and creating a closure, means I
+  ;; can compare two functions created with `keyswap--equivalent-command' by
+  ;; using the `equal' function making things much easier to test.
+  ;;
+  ;; While in later versions of emacs the `eval' function can take a lexical
+  ;; environment, I know that this can't be done on at least emacs 24.3.1, and
+  ;; so am using the more compatible call method.
+  (eval
+   `(let ((key key) (old-binding command)
+          (current-key (aref key (- (length key) 1))))
+      (lambda (&optional arg return-command)
+        ,(concat keyswap-command-docstring "\""
+                 (edmacro-format-keys
+                  (apply #'concatenate 'string
+                         (mapcar
+                          (lambda (arg) (format "%c" arg))
+                          key)))
+                 "\""
+                 "\n\nWrapping the command\n\n"
+                 (format "%S" command)
+                 "\n\nWith the key vector\n\n"
+                 (format "%S" key))
+        (interactive "p")
+        (if return-command
+            old-binding
+          ;; Set `last-command-event' so that `self-insert-char' behaves as
+          ;; expected and use `call-interactively' to set the values that
+          ;; `this-command-keys-vector' will find.
+          (let ((last-command-event current-key))
+            (call-interactively old-binding nil key)))))
+   t))
 
 ;; This function is a little misleadingly named.
 ;; When it is called on a normal command it does in fact return the equivalent
