@@ -165,7 +165,9 @@ programmatically and from inspection."
                          key)))
                 "\""
                 "\n\nWrapping the command\n\n"
-                (format "%S" command))
+                (format "%S" command)
+               "\n\nWith the key vector\n\n"
+               (format "%S" key))
        (interactive "p")
        (if return-command
            ,old-binding
