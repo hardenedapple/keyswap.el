@@ -408,7 +408,6 @@ First off, if this minor mode is activated before others that change the current
 ;;
 ;; XXX TODO -- Account for someone turning `keyswap-mode' off or on while in
 ;; `isearch-mode'.
-;; Again, something that shouldn't, but will, happen.
 ;;
 ;; These last two shouldn't really happen, whenever someone does anything
 ;; non-standard in `isearch-mode' it just takes them out of that mode and puts
