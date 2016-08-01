@@ -126,7 +126,7 @@
 ;;
 ;; In order to have the same swapped keys in `isearch-mode' as in the buffer
 ;; you're currently editing, you can add
-;; (keyswap-isearch-setup)
+;; (add-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
 ;; into your config.
 
 
