@@ -1,4 +1,4 @@
-;;; keyswap.el --- swap bindings between key pairs
+;;; keyswap.el --- swap bindings between key pairs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2016 Matthew Malcomson
 
@@ -29,7 +29,7 @@
 ;; Version: 0.1.1
 ;; Package-Version: 20160730.1620
 ;; URL: http://github.com/hardenedapple/keyswap.el
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -162,32 +162,40 @@ programmatically and from inspection."
   ;; While in later versions of emacs the `eval' function can take a lexical
   ;; environment, I know that this can't be done on at least emacs 24.3.1, and
   ;; so am using the more compatible call method.
+  ;;
+  ;; For reasons to do with compiler optimisations (from what I've been told)
+  ;; `eval' completely ignores the surrounding environment when
+  ;; `lexical-binding' is `t'.
+  ;; I like `lexical-binding' so I'm making a branch where it's on by default.
+  ;; In order to pass the environment into the call to `eval' I need to use the
+  ;; LEXICAL parameters second option (instead of `t' pass in an alist of the
+  ;; environment you want).
+  ;; This is only available in emacs versions 24.4 and above.
   (eval
-   `(let ((key key) (old-binding command)
-          (current-key (aref key (- (length key) 1))))
-      (lambda (&optional arg return-command)
-        ,(concat keyswap-command-docstring "\""
-                 (edmacro-format-keys
-                  (apply #'concatenate 'string
-                         (mapcar
-                          (lambda (arg) (format "%c" arg))
-                          key)))
-                 "\""
-                 "\n\nWrapping the command\n\n"
-                 (format "%S" command)
-                 "\n\nWith the key vector\n\n"
-                 (format "%S" key))
-        (interactive "p")
-        (if return-command
-            old-binding
-          ;; Set `last-command-event' so that `self-insert-char' behaves as
-          ;; expected.
-          ;; Attempt to use `call-interactively' to set the values that
-          ;; `this-command-keys-vector' will find, but it doesn't seem to be
-          ;; working at the moment, and I can't figure out why.
-          (let ((last-command-event current-key))
-            (call-interactively old-binding nil key)))))
-   t))
+   `(lambda (&optional arg return-command)
+      ,(concat keyswap-command-docstring "\""
+               (edmacro-format-keys
+                (apply #'concatenate 'string
+                       (mapcar
+                        (lambda (arg) (format "%c" arg))
+                        key)))
+               "\""
+               "\n\nWrapping the command\n\n"
+               (format "%S" command)
+               "\n\nWith the key vector\n\n"
+               (format "%S" key))
+      (interactive "p")
+      (if return-command
+          old-binding
+        ;; Set `last-command-event' so that `self-insert-char' behaves as
+        ;; expected.
+        ;; Attempt to use `call-interactively' to set the values that
+        ;; `this-command-keys-vector' will find, but it doesn't seem to be
+        ;; working at the moment, and I can't figure out why.
+        (let ((last-command-event current-key))
+          (call-interactively old-binding nil key))))
+   `((key . ,key) (old-binding . ,command)
+     (current-key . ,(aref key (- (length key) 1))))))
 
 ;; This function is a little misleadingly named.
 ;; When it is called on a normal command it does in fact return the equivalent

@@ -1,4 +1,4 @@
-;;; Testing keyswap.el
+;;; Testing keyswap.el -*- lexical-binding: t -*-
 ;;;
 ;;; emacs -batch -l ert -L /home/matthew/.emacs.d/my-packages/keyswap-mode/ -l keyswap-tests.el -f ert-run-tests-batch-and-exit
 
