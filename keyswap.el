@@ -168,10 +168,9 @@ programmatically and from inspection."
       (lambda (&optional arg return-command)
         ,(concat keyswap-command-docstring "\""
                  (edmacro-format-keys
-                  (apply #'concatenate 'string
-                         (mapcar
-                          (lambda (arg) (format "%c" arg))
-                          key)))
+                  (apply
+                   #'concat
+                   (mapcar (lambda (arg) (format "%c" arg)) key)))
                  "\""
                  "\n\nWrapping the command\n\n"
                  (format "%S" command)
