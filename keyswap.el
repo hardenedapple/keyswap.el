@@ -354,6 +354,11 @@ the current set of `keyswap-pairs'.
                          (remove pair keyswap-pairs))))
    keyswaps))
 
+;;;###autoload
+(defun keyswap-set-pairs (&rest keyswaps)
+  (setq-local keyswap-pairs nil)
+  (apply #'keyswap-add-pairs keyswaps))
+
 (defun keyswap-include-braces ()
   "Hook to make function `keyswap-mode' swap {,[, and },]."
   (keyswap-add-pairs ?\[ ?\{   ?\] ?\} )
@@ -461,6 +466,9 @@ current buffer when searching with `isearch-mode'."
 
 ;; TODO XXX -- Add support for avy and ace-jump (may just be finding the correct
 ;; hook, it may be something else)
+
+;; Simply make a function out of the `keyswap-pairs' in the buffer, and assign
+;; that function to `avy-translate-char-function'.
 
 (provide 'keyswap)
 

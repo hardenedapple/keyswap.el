@@ -19,7 +19,7 @@
 
 (ert-deftest keyswap-test-remove-pairs ()
   "Ensures that `keyswap-remove-pairs' does what it advertises."
-  (keyswap--test-with-temp-list
+  (keyswap--with-temp-list
    ;; * Removes a pair
    (should (equal (keyswap--test-with-temp-list (keyswap-remove-pairs ?1 ?!))
                   (remove '([?1] . [?!]) keyswap-pairs)))
@@ -44,7 +44,7 @@
 
 (ert-deftest keyswap-test-add-pairs ()
   "Ensures that `keyswap-remove-pairs' does what it advertises."
-  (keyswap--test-with-temp-list
+  (keyswap--with-temp-list
    ;; * Adds a pair into the list
    (should (equal (keyswap--test-with-temp-list (keyswap-add-pairs ?a ?b))
                   (cons '([?a] . [?b]) keyswap-pairs)))
@@ -59,6 +59,15 @@
    (should (equal (keyswap--test-with-temp-list
                    (keyswap-add-pairs ?a ?b ?1 ?! ?c ?d))
                   (append (list '([?c] . [?d]) '([?a] . [?b])) keyswap-pairs)))))
+
+(ert-deftest keyswap-test-set-pairs ()
+  "ensures that `keyswap-set-pairs' does sets `keyswap-pairs'."
+  (keyswap--with-temp-list
+   ;; * correctly sets the list
+   (should (equal (keyswap--test-with-temp-list (message "function is called"))
+                  keyswap-pairs))
+   (keyswap-set-pairs ?a ?b)
+   (should (equal '(([?a] . [?b])) keyswap-pairs))))
 
 (ert-deftest keyswap-test-equivalent-command ()
   "Check `keyswap--equivalent-command' returns a function that
