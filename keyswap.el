@@ -291,9 +291,11 @@ If there is no relevant keymap in
 these keys, and stores that as the keymap in `minor-mode-overriding-map-alist'
 to be used in all future invocations of this minor-mode.
 
-When using this minor-mode along with others there are a few things to watch out
-for.
-First off, if this minor mode is activated before others that change the current
+If this minor mode is activated before others that change the
+maps, then the bindings on each keys will not represent the
+bindings of those other minor modes.  In this case
+`keyswap-update-keys' should be called to update the bindings on
+the current set of `keyswap-pairs'.
 "
   nil
   " keyswap"
