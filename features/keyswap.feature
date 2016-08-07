@@ -13,11 +13,15 @@ Feature: Keys Bindings are swapped
   Scenario: Type with and without keyswap-mode
     Given I am in buffer "*keyswap-mode-tests*"
     Given the buffer is empty
-    When I press "hello"
+    When I type "hello"
     Then I should see "hello"
     When I swap only keys "h" and "j"
     And I turn on keyswap-mode
     And I update the keyswap map
     Given I clear the buffer
-    When I press "hello"
+    When I type "hello"
     Then I should see "jello"
+    When I turn off keyswap-mode
+    Given I clear the buffer
+    When I type "hello"
+    Then I should see "hello"
