@@ -73,3 +73,11 @@
         (And "I press \"C-f\"")
         (And "I press \"C-b\"")
         (And "I execute the action chain")))
+
+(Given "^I call the \\(braces\\|quotes\\|underscore\\|colon\\) swap hook$"
+       (lambda (which-hook)
+         (cond
+          ((string= which-hook "braces") (keyswap-include-braces))
+          ((string= which-hook "quotes") (keyswap-include-quotes))
+          ((string= which-hook "underscore") (keyswap-tac-underscore-exception))
+          ((string= which-hook "colon") (keyswap-colon-semicolon)))))

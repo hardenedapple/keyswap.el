@@ -22,6 +22,53 @@ Feature: Keys Bindings are swapped
     Then I should see "hello"
 
 
+Feature: Provided exceptions for certain symbols
+  In order to account for different major modes
+  I want to use the provided exceptions
+
+  Scenario: I add braces to the keyswap pairs
+    Given I am in buffer "*keyswap-test-hooks*"
+    Given I clear the buffer
+    And I turn on keyswap-mode
+    When I type "[]{}"
+    Then I should see "[]{}"
+    Given I call the braces swap hook
+    And I clear the buffer
+    When I type "[]{}"
+    Then I should see "{}[]"
+
+  Scenario: I add braces to the keyswap pairs
+    Given I clear the buffer
+    And I turn on keyswap-mode
+    When I type "\'\""
+    Then I should see "\'\""
+    Given I call the quotes swap hook
+    And I clear the buffer
+    When I type "\'\""
+    Then I should see "\"\'"
+
+  Scenario: I add braces to the keyswap pairs
+    Given I clear the buffer
+    And I turn on keyswap-mode
+    When I type "-_"
+    Then I should see "_-"
+    Given I call the underscore swap hook
+    And I clear the buffer
+    When I type "-_"
+    Then I should see "-_"
+
+  Scenario: I add braces to the keyswap pairs
+    Given I clear the buffer
+    And I turn on keyswap-mode
+    When I type ";:"
+    Then I should see ";:"
+    Given I call the colon swap hook
+    And I clear the buffer
+    When I type ";:"
+    Then I should see ":;"
+
+
+
 Feature: Key bindings propagate to isearch-mode
   In order to search with swapped key bindings
   I use the keyswap-isearch hooks
@@ -57,6 +104,7 @@ Feature: Key bindings propagate to isearch-mode
     Given Mode integration is off
     And I isearch for "done"
     Then the cursor should be after "done"
+
 
 Feature Key bindings are used by jump-char
   In order to jump to a swapped key character
