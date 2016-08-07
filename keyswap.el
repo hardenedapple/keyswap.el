@@ -358,6 +358,7 @@ the current set of `keyswap-pairs'.
                  (funcall action-fn (cons (vector left-key)
                                           (vector right-key)))))))
 
+;;;###autoload
 (defun keyswap-add-pairs (&rest keyswaps)
   "Add KEYSWAPS into `keyswap-pairs'."
   (keyswap-act-on-pairs
@@ -370,6 +371,7 @@ the current set of `keyswap-pairs'.
                                (equal (cons (cdr left) (car left)) right))))))
    keyswaps))
 
+;;;###autoload
 (defun keyswap-remove-pairs (&rest keyswaps)
   "Remove KEYSWAPS from `keyswap-pairs'."
   (keyswap-act-on-pairs
@@ -384,21 +386,25 @@ the current set of `keyswap-pairs'.
   (setq-local keyswap-pairs nil)
   (apply #'keyswap-add-pairs keyswaps))
 
+;;;###autoload
 (defun keyswap-include-braces ()
   "Hook to make function `keyswap-mode' swap {,[, and },]."
   (keyswap-add-pairs ?\[ ?\{   ?\] ?\} )
   (keyswap-update-keys))
 
+;;;###autoload
 (defun keyswap-include-quotes ()
   "Hook to make function `keyswap-mode' swap \" and '."
   (keyswap-add-pairs ?\' ?\")
   (keyswap-update-keys))
 
+;;;###autoload
 (defun keyswap-tac-underscore-exception ()
   "Hook to make function `keyswap-mode' ignore - and _."
   (keyswap-remove-pairs ?- ?_)
   (keyswap-update-keys))
 
+;;;###autoload
 (defun keyswap-colon-semicolon ()
   "Hook to make function `keyswap-mode' swap : and ;."
   (keyswap-add-pairs ?: ?\;)
