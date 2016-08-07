@@ -132,6 +132,9 @@
 
 ;;; Code:
 
+;; TODO XXX Do I want to add full support for key chords instead of just single
+;; keys?
+
 (require 'cl-lib)
 (require 'edmacro)
 
@@ -470,7 +473,7 @@ current buffer when searching with `isearch-mode'."
     (dolist (key-pair keyswap-pairs)
       (keyswap-swap-these (car key-pair) (cdr key-pair)
                           isearch-mode-map isearch-mode-map))
-    (setq-local keyswap-isearch-swapped-pairs (copy-list keyswap-pairs))
+    (setq-local keyswap-isearch-swapped-pairs (copy-sequence keyswap-pairs))
     ;; I have to remove the swapped keys from `isearch-mode-map' because it is an
     ;; editor global map, and I need to not affect other modes.
     ;; I can't just have `keyswap-isearch-end-hook' stored in
