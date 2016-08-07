@@ -35,8 +35,8 @@
 
 (When "^I swap\\( only\\|\\) keys \"\\(.\\)\" and \"\\(.\\)\"$"
       (lambda (only left-key right-key)
-        (if (s-blank? only) (keyswap-set-pairs left-key right-key)
-          (keyswap-add-pairs left-key right-key))))
+        (if (s-blank? only) (keyswap-add-pairs left-key right-key)
+          (keyswap-set-pairs left-key right-key))))
 
 (When "^I update the keyswap map$"
       (lambda () (keyswap-update-keys)))
