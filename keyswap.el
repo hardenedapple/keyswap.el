@@ -137,13 +137,19 @@
 
 (defconst keyswap-command-docstring "CHAR COMMAND WRAPPER ")
 
+(defun keyswap--print-key-vector (keyvec)
+  (edmacro-format-keys
+   (apply #'concat (mapcar (lambda (arg) (format "%c" arg)) keyvec))))
+
 ;; We can't just use a keyboard macro as we want to swap the commands between
 ;; two keys. A keyboard macro on both would put us into an infinite loop.
 (defun keyswap--equivalent-command (key command)
   "Return wrapped COMMAND so it's called as if bound to KEY.
 
 Generate a useful docstring for this command so it may be identified both
-programmatically and from inspection."
+programmatically and from inspection.
+
+Neither KEY nor COMMAND may be `nil'. "
   ;; I need to create the form when this function is used in order to
   ;; programatically create the docstring for the `lambda' form.
   ;;
@@ -167,10 +173,7 @@ programmatically and from inspection."
           (current-key (aref key (- (length key) 1))))
       (lambda (&optional arg return-command)
         ,(concat keyswap-command-docstring "\""
-                 (edmacro-format-keys
-                  (apply
-                   #'concat
-                   (mapcar (lambda (arg) (format "%c" arg)) key)))
+                 (keyswap--print-key-vector key)
                  "\""
                  "\n\nWrapping the command\n\n"
                  (format "%S" command)
@@ -187,6 +190,17 @@ programmatically and from inspection."
           (let ((last-command-event current-key))
             (call-interactively old-binding nil key)))))
    t))
+
+(defun keyswap--unbound-key-mock ()
+  "Mock function to pretend that this key is undefined.
+
+This function is only designed for `keyswap-mode', to pretend to
+swap the action between keys where one is unbounded."
+  (interactive)
+  ;; TODO XXX -- This only works because `call-interactively' doesn't actually
+  ;; change what is returned from the function `this-command-keys-vector'.
+  ;; If/When that's fixed, I'll have to figure something else out.
+  (error "%s is undefined" (keyswap--print-key-vector (this-command-keys-vector))))
 
 ;; This function is a little misleadingly named.
 ;; When it is called on a normal command it does in fact return the equivalent
@@ -213,18 +227,26 @@ command has been created using this function, the docstring would
 then begin with `keyswap-command-docstring'.
 
 Otherwise create a `lambda' function that runs that command under
-the false environment where `last-command-event' is KEY"
+the false environment where `last-command-event' is KEY
+
+When asked to find the equivalent binding of `nil', we create an
+artificial function that complains about that binding being
+unavailable.
+"
   (let* ((current-binding
           (let ((direct-command
                  (if keymap (lookup-key keymap key) (key-binding key))))
             (or (command-remapping direct-command nil keymap)
-                direct-command)))
+                direct-command
+                'keyswap--unbound-key-mock)))
          (current-docstring (documentation current-binding)))
-    (if (and (listp current-binding)
-             current-docstring
-             (string-prefix-p keyswap-command-docstring current-docstring))
-        (funcall current-binding nil t)
-      (keyswap--equivalent-command key current-binding))))
+    (if (eq current-binding 'keyswap--unbound-key-mock)
+        'keyswap--unbound-key-mock
+        (if (and (listp current-binding)
+                 current-docstring
+                 (string-prefix-p keyswap-command-docstring current-docstring))
+            (funcall current-binding nil t)
+          (keyswap--equivalent-command key current-binding)))))
 
 (defun keyswap-swap-these (left-key right-key keymap &optional base-map)
   "Puts swapped bindings of LEFT-KEY and RIGHT-KEY into KEYMAP.

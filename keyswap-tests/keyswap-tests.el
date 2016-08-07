@@ -119,7 +119,10 @@ to do depending on the state of the keymap."
       (define-key remapped-map [remap self-insert-command] #'next-line)
       (set-keymap-parent remapped-map test-map)
       (should (equal (keyswap-equivalent-binding [?a] remapped-map)
-                     (keyswap--equivalent-command [?a] 'next-line))))))
+                     (keyswap--equivalent-command [?a] 'next-line))))
+    ;; * When given an unmapped key, returns the special wrapper function
+    (should (equal (keyswap-equivalent-binding [?l] test-map)
+                   'keyswap--unbound-key-mock))))
 
 (defun keyswap--test-all-pairs-swapped (keyswap-pairs current-map original-map
                                                       &optional in-place)
