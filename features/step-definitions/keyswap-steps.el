@@ -39,10 +39,7 @@
         (let ((left-event (aref left-string 0))
               (right-event (aref right-string 0)))
           (if (s-blank? only) (keyswap-add-pairs left-event right-event)
-            (keyswap-set-pairs left-event right-event)))))
-
-(When "^I update the keyswap map$"
-      (lambda ()
+            (keyswap-set-pairs left-event right-event)))
         (execute-kbd-macro
          (vconcat [?\M-x] (string-to-vector "keyswap-update-keys")))))
 
@@ -52,3 +49,27 @@
       (lambda (mode)
         (let ((v (vconcat [?\C-0 ?\M-x] (string-to-vector mode))))
           (execute-kbd-macro v))))
+
+(Given "^Mode integration is \\(on\\|off\\)$"
+       (lambda (on-or-off)
+         (funcall (if (string= on-or-off "off") #'remove-hook #'add-hook)
+                  'isearch-mode-hook 'keyswap-isearch-start-hook)))
+
+(When "^I isearch for \"\\(.+\\)\"$"
+      (lambda (search-string)
+        (Given "I start an action chain")
+        (And "I press \"C-s\"")
+        (And (format "I type \"%s\"" search-string))
+        (And "I execute the action chain")))
+
+(When "^I jump-char to \"\\(.\\)\""
+      (lambda (search-char)
+        (require 'jump-char)
+        (Given "I start an action chain")
+        (And "I press \"M-x\"")
+        (And "I type \"jump-char-forward\"")
+        (And "I press \"<return>\"")
+        (And (format "I press \"%s\"" search-char))
+        (And "I press \"C-f\"")
+        (And "I press \"C-b\"")
+        (And "I execute the action chain")))
