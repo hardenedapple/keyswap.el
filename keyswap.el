@@ -349,7 +349,7 @@ the current set of `keyswap-pairs'.
       (when currently-on (keyswap-mode t)))
     (run-hooks 'keyswap-update-keys-hook)))
 
-(defun keyswap-act-on-pairs (action-fn keyswaps)
+(defun keyswap--act-on-pairs (action-fn keyswaps)
   "Call ACTION-FN on successive pairs of KEYSWAPS."
   (cl-loop for remaining-keyswaps on keyswaps by #'cddr
         do (let ((left-key (car remaining-keyswaps))
@@ -361,7 +361,7 @@ the current set of `keyswap-pairs'.
 ;;;###autoload
 (defun keyswap-add-pairs (&rest keyswaps)
   "Add KEYSWAPS into `keyswap-pairs'."
-  (keyswap-act-on-pairs
+  (keyswap--act-on-pairs
    (lambda (pair)
      (setq-local
       keyswap-pairs
@@ -374,7 +374,7 @@ the current set of `keyswap-pairs'.
 ;;;###autoload
 (defun keyswap-remove-pairs (&rest keyswaps)
   "Remove KEYSWAPS from `keyswap-pairs'."
-  (keyswap-act-on-pairs
+  (keyswap--act-on-pairs
    (lambda (pair)
      (setq-local keyswap-pairs
                  (remove (cons (cdr pair) (car pair))
