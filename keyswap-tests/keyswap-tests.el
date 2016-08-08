@@ -124,26 +124,34 @@ to do depending on the state of the keymap."
     (should (equal (keyswap-equivalent-binding [?l] test-map)
                    'keyswap--unbound-key-mock))))
 
+(defun keyswap--both-ways ()
+  (append keyswap-pairs (mapcar (lambda (val) (cons (cdr val) (car val)))
+                                keyswap-pairs)))
+(defun keyswap--all-elements ()
+  (loop for (left . right) in keyswap-pairs append (list left right)))
+
+(defmacro keyswap--test-all-non-elements (&rest body)
+  "Iterate over all keys, running BODY whenever that key isn't in
+  `keyswap-pairs'"
+  `(let ((keyswap-all-elements (keyswap--all-elements)))
+     (loop for key from 1 upto 255
+           when (not (member (vector key) keyswap-all-elements))
+           do (progn ,@body))))
+
 (defun keyswap--test-all-pairs-swapped (keyswap-pairs current-map original-map
                                                       &optional in-place)
   "Check all and only `keyswap-pairs' are swapped."
-  (let ((keyswap-both-ways
-         (append keyswap-pairs (mapcar (lambda (val) (cons (cdr val) (car val)))
-                                       keyswap-pairs)))
-        (keyswap-all-elements
-         (loop for (left . right) in keyswap-pairs append (list left right))))
-    ;; All keys in `keyswap-pairs' have been mapped as their partner.
-    (dolist (key-pair keyswap-both-ways)
-      (should (equal (lookup-key current-map (car key-pair))
-                     (keyswap--equivalent-command
-                      (cdr key-pair)
-                      (lookup-key original-map (cdr key-pair))))))
-    ;; Other keys are unaffected
-    (loop for key from 1 upto 255
-          when (not (member (vector key) keyswap-all-elements))
-          do (should (equal (lookup-key current-map (vector key))
-                            (if in-place (lookup-key original-map (vector key))
-                              nil))))))
+  ;; All keys in `keyswap-pairs' have been mapped as their partner.
+  (dolist (key-pair (keyswap--both-ways))
+    (should (equal (lookup-key current-map (car key-pair))
+                   (keyswap--equivalent-command
+                    (cdr key-pair)
+                    (lookup-key original-map (cdr key-pair))))))
+  ;; Other keys are unaffected
+  (keyswap--test-all-non-elements
+   (should (equal (lookup-key current-map (vector key))
+                  (if in-place (lookup-key original-map (vector key))
+                    nil)))))
 
 (ert-deftest keyswap-isearch-hooks ()
   "Ensure that `keyswap-isearch-start-hook' and
@@ -196,6 +204,27 @@ functions and other such niceties."
      (should-not (keyswap--matches-newgen)))))
 
 
+(ert-deftest keyswap-inserts-shifted-numbers ()
+  "Ensures that pressing the swapped keys inserts their opposite number."
+  ;; Look here
+  ;; http://rejeep.github.io/emacs/testing/cask/ecukes/2013/10/20/integration-testing-in-emacs.html
+  ;; for an example of integration testing.
+  ;; It should have something worth using.
+  (with-temp-buffer ))
+
+(ert-deftest keyswap-test-char-translate ()
+  "Check `keyswap--avy-char-translate' returns the correlating `keyswap-pairs'."
+  (keyswap--with-temp-list
+   (dolist (keyswap-mode '(t nil))
+     (dolist (key-pair (keyswap--both-ways))
+       (let ((left (aref (car key-pair) 0))
+             (right (aref (cdr key-pair) 0)))
+         (should (equal (keyswap--avy-char-translate left)
+                        (if keyswap-mode right left)))
+         (should (equal (keyswap--avy-char-translate right)
+                        (if keyswap-mode left right)))))
+     (keyswap--test-all-non-elements
+      (should (equal (keyswap--avy-char-translate key) key))))))
 
 (ert-deftest keyswap-future-enhancements ()
   "Tests that future enhancements should make pass."
