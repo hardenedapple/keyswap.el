@@ -203,15 +203,6 @@ functions and other such niceties."
      (setq keyswap-mode t)
      (should-not (keyswap--matches-newgen)))))
 
-
-(ert-deftest keyswap-inserts-shifted-numbers ()
-  "Ensures that pressing the swapped keys inserts their opposite number."
-  ;; Look here
-  ;; http://rejeep.github.io/emacs/testing/cask/ecukes/2013/10/20/integration-testing-in-emacs.html
-  ;; for an example of integration testing.
-  ;; It should have something worth using.
-  (with-temp-buffer ))
-
 (ert-deftest keyswap-test-char-translate ()
   "Check `keyswap--avy-char-translate' returns the correlating `keyswap-pairs'."
   (keyswap--with-temp-list
