@@ -1,32 +1,6 @@
 ;; This file contains your project specific step definitions. All
 ;; files in this directory whose names end with "-steps.el" will be
 ;; loaded automatically by Ecukes.
-
-(Given "^I have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(When "^I have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(Then "^I should have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(And "^I have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(But "^I should not have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
 (Then "^\\(.+\\) should\\( not\\|\\) be active$"
        (lambda (mode activep)
          (let* ((symbol (intern mode))
@@ -81,3 +55,19 @@
           ((string= which-hook "quotes") (keyswap-include-quotes))
           ((string= which-hook "underscore") (keyswap-tac-underscore-exception))
           ((string= which-hook "colon") (keyswap-colon-semicolon)))))
+
+(And "^I \\(start\\|remove\\) avy-integration"
+     (lambda (arg) (if (string= arg "start") (keyswap-avy-integrate)
+                     (keyswap-avy-remove-integration))))
+
+(When "^I jump to the \\(first\\|second\\) occurance of \"\\(.\\)\"$"
+      (lambda (position wordstart)
+        (require 'avy)
+        (let ((char (if (string= position "first") "a" "s")))
+          (Given "I start an action chain")
+          (And "I press \"M-x\"")
+          (And "I type \"avy-goto-word-1\"")
+          (And "I press \"<return>\"")
+          (And (format "I press \"%s\"" wordstart))
+          (And (format "I press \"%s\"" char))
+          (And "I execute the action chain"))))

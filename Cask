@@ -6,4 +6,5 @@
 (development
  (depends-on "ecukes")
  (depends-on "espuds")
- (depends-on "jump-char"))
+ (depends-on "jump-char")
+ (depends-on "avy"))

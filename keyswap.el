@@ -530,6 +530,11 @@ current buffer when searching with `isearch-mode'."
   ;; `keyswap-pairs'
   (setq avy-translate-char-function #'keyswap--avy-char-translate))
 
+(defun keyswap-avy-remove-integration ()
+  "Remove the settings such that `keyswap-mode' affects `avy'."
+  (advice-remove 'read-char 'keyswap-read-char-transform)
+  (setq avy-translate-char-function #'identity))
+
 (provide 'keyswap)
 
 ;;; keyswap.el ends here

@@ -94,13 +94,6 @@ Feature: Key bindings propagate to isearch-mode
     Then the cursor should be after "lone"
 
   Scenario: Keys are not swapped unless the hook is on
-    Given I insert:
-    """
-    First line
-    Second line
-    Third line
-    done
-    """
     Given Mode integration is off
     And I isearch for "done"
     Then the cursor should be after "done"
@@ -126,3 +119,40 @@ Feature Key bindings are used by jump-char
     Given Mode integration is on
     And I jump-char to "t"
     Then the cursor should be before "ello there this is a line"
+
+
+Feature Key swaps are propagated to avy
+  In order to jump to a word using avy
+  I can specify the start of the word with swapped keys
+
+  # I only check avy-goto-word-1. Functions in avy.el *currently* all either use
+  # `read-char' or aren't relevant to using keyswap-mode.
+  # Testing every function in avy.el is just as brittle (because the function
+  # names are very likely to change) and much more work than just checking one
+  # function and assuming it's representative of how all functions in the
+  # library work.
+  Scenario: Keys are swapped in avy-goto-word-1
+    Given I clear the buffer
+    # When printing out the problem steps, having a '%' in the text below causes
+    # problems, it doesn't cause any problems with running the test though.
+    Given I insert:
+    """
+    ! @ # $ % ^ & * ( )
+    1 2 3 4 5 6 7 8 9 0
+    ! @ # $ % ^ & * ( )
+    1 2 3 4 5 6 7 8 9 0
+    """
+    Given I go to beginning of buffer
+    And I jump to the first occurance of "1"
+    Then the cursor should be at point "21"
+    When I turn on keyswap-mode
+    And I start avy-integration
+    And I swap only keys "a" and "s"
+    And I jump to the first occurance of "1"
+    Then the cursor should be at point "61"
+    When I swap keys "1" and "!"
+    And I jump to the first occurance of "1"
+    Then the cursor should be at point "41"
+    When I remove avy-integration
+    And I jump to the first occurance of "1"
+    Then the cursor should be at point "21"
