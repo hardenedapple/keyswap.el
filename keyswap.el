@@ -128,6 +128,10 @@
 ;; you're currently editing, you can add
 ;; (add-hook 'isearch-mode-hook 'keyswap-isearch-start-hook)
 ;; into your config.
+;;
+;; To have swapped keys when using `avy', you can have
+;; (with-eval-after-load 'avy (keyswap-avy-integrate))
+;; in your config.
 
 
 ;;; Code:
