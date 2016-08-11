@@ -131,7 +131,7 @@ Feature Key swaps are propagated to avy
   # names are very likely to change) and much more work than just checking one
   # function and assuming it's representative of how all functions in the
   # library work.
-  Scenario: Keys are swapped in avy-goto-word-1
+  Scenario: Keys are not swapped in avy unless we do something
     Given I clear the buffer
     # When printing out the problem steps, having a '%' in the text below causes
     # problems, it doesn't cause any problems with running the test though.
@@ -145,6 +145,8 @@ Feature Key swaps are propagated to avy
     Given I go to beginning of buffer
     And I jump to the first occurance of "1"
     Then the cursor should be at point "21"
+
+  Scenario: Keyswap mode can swap keys in avy-goto-word-1
     When I turn on keyswap-mode
     And I start avy-integration
     And I swap only keys "a" and "s"
@@ -153,6 +155,8 @@ Feature Key swaps are propagated to avy
     When I swap keys "1" and "!"
     And I jump to the first occurance of "1"
     Then the cursor should be at point "41"
+
+  Scenario: Keyswap avy integration may be removed cleanly
     When I remove avy-integration
     And I jump to the first occurance of "1"
     Then the cursor should be at point "21"
