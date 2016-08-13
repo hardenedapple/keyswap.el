@@ -340,6 +340,7 @@ the current set of `keyswap-pairs'.
 (defvar keyswap-update-keys-hook nil
   "Hook run just after calling `keyswap-update-keys'.")
 
+;;;###autoload
 (defun keyswap-update-keys ()
   "Update the buffer-local keymap currently used for function `keyswap-mode'."
   (interactive)
